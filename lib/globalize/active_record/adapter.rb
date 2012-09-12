@@ -20,8 +20,10 @@ module Globalize
       end
 
       def fetch(locale, name)
+        # Only hit the database if translations haven't been pre-loaded
+        search_database = record.translations.blank?
         record.globalize_fallbacks(locale).each do |fallback|
-          value = stash.contains?(fallback, name) ? fetch_stash(fallback, name) : fetch_attribute(fallback, name)
+          value = stash.contains?(fallback, name) ? fetch_stash(fallback, name) : fetch_attribute(fallback, name, {:search_database => search_database})
 
           unless fallbacks_for?(value)
             set_metadata(value, :locale => fallback, :requested_locale => locale)
@@ -73,8 +75,8 @@ module Globalize
         column.text? && translation_class.serialized_attributes[name.to_s]
       end
 
-      def fetch_attribute(locale, name)
-        translation = record.translation_for(locale)
+      def fetch_attribute(locale, name, options={})
+        translation = record.translation_for(locale, options)
         return translation && translation.send(name)
       end
 

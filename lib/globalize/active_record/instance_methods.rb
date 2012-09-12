@@ -130,12 +130,17 @@ module Globalize
         translation_for(::Globalize.locale)
       end
 
-      def translation_for(locale)
+      def translation_for(locale, options={})
+        options = {
+          :search_database => true
+        }.merge(options)
         @translation_caches ||= {}
         unless @translation_caches[locale]
-          # Fetch translations from database as those in the translation collection may be incomplete
           _translation = translations.detect{|t| t.locale.to_s == locale.to_s}
-          _translation ||= translations.with_locale(locale).first
+          # Fetch translations from database as those in the translation collection may be incomplete
+          if options[:search_database]
+            _translation ||= translations.with_locale(locale).first
+          end
           _translation ||= translations.build(:locale => locale)
           @translation_caches[locale] = _translation
         end
